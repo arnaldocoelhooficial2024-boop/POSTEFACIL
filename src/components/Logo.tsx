@@ -19,7 +19,7 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
       </div>
       <div className="flex flex-col justify-center">
         <span className={`font-sans font-bold tracking-tight text-white ${titleSize} leading-none`}>
-          PostaFácil
+          PosteFácil
         </span>
         <span className={`font-serif italic text-[#d4af37] ${subtitleSize} tracking-[0.2em] uppercase mt-1`}>
           Beauty

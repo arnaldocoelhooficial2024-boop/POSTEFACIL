@@ -18,9 +18,9 @@ export const saveToHistory = async (userId: string, data: any) => {
     if (error) console.error('Supabase save error:', error);
   } else {
     // Fallback to local storage
-    const history = JSON.parse(localStorage.getItem('postafacil_history') || '[]');
+    const history = JSON.parse(localStorage.getItem('postefacil_history') || '[]');
     history.push({ id: Date.now().toString(), user_id: userId, data, created_at: new Date().toISOString() });
-    localStorage.setItem('postafacil_history', JSON.stringify(history));
+    localStorage.setItem('postefacil_history', JSON.stringify(history));
   }
 };
 
@@ -38,7 +38,7 @@ export const getHistory = async (userId: string) => {
     return data;
   } else {
     // Fallback to local storage
-    const history = JSON.parse(localStorage.getItem('postafacil_history') || '[]');
+    const history = JSON.parse(localStorage.getItem('postefacil_history') || '[]');
     return history.filter((item: any) => item.user_id === userId).sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
   }
 };
