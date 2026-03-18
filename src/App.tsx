@@ -5,6 +5,12 @@ import ReactMarkdown from 'react-markdown';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'motion/react';
+import { PaywallModal } from './components/PaywallModal';
+import { UpsellModal } from './components/UpsellModal';
+import { HistoryScreen } from './components/HistoryScreen';
+import { DashboardScreen } from './components/DashboardScreen';
+import { Logo } from './components/Logo';
+import { saveToHistory } from './lib/supabase';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -15,7 +21,7 @@ function cn(...inputs: ClassValue[]) {
 interface BriefingData {
   nome: string;
   instagram: string;
-  nicho: string;
+  nicho: string[];
   diferencial: string;
   publico: string;
 }
@@ -33,7 +39,7 @@ interface DayContent {
 const INITIAL_BRIEFING_DATA: BriefingData = {
   nome: '',
   instagram: '',
-  nicho: '',
+  nicho: [],
   diferencial: '',
   publico: '',
 };
@@ -66,16 +72,16 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
   };
 
   return (
-    <div className="min-h-screen relative flex overflow-hidden bg-[#050505]">
+    <div className="min-h-screen relative flex overflow-hidden bg-[#0c0510]">
       {/* Full Background Image */}
       <div className="absolute inset-0 z-0">
         <img 
           src="https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?q=80&w=2070&auto=format&fit=crop" 
           alt="Luxury Beauty Background" 
-          className="w-full h-full object-cover opacity-70"
+          className="w-full h-full object-cover opacity-40 lg:opacity-70"
           referrerPolicy="no-referrer"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#050505]/90 via-[#050505]/60 to-[#050505]/90" />
+        <div className="absolute inset-0 bg-[#0c0510]/60 lg:bg-gradient-to-r lg:from-[#0c0510]/90 lg:via-[#0c0510]/60 lg:to-[#0c0510]/90" />
       </div>
 
       {/* Bidirectional Content */}
@@ -88,23 +94,19 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <Sparkles className="w-12 h-12 text-[#d4af37] mb-8" />
-            <h1 className="font-serif text-5xl xl:text-7xl leading-tight mb-6">
-              PostaFácil <br/><span className="text-white/50">Beauty</span>
-            </h1>
-            <p className="text-lg xl:text-xl font-light text-white/70 max-w-lg leading-relaxed">
+            <Logo size="lg" className="mb-8" />
+            <p className="text-lg xl:text-xl font-light text-white/70 max-w-lg leading-relaxed mt-6">
               A inteligência artificial a favor da sua beleza. Crie conteúdos magnéticos e atraia um público premium para o seu negócio.
             </p>
           </motion.div>
         </div>
 
         {/* Right Side: Auth Form */}
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 bg-[#050505]/40 backdrop-blur-xl border-l border-white/10 shadow-2xl">
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 lg:p-16 bg-transparent lg:bg-[#0c0510]/40 lg:backdrop-blur-xl lg:border-l lg:border-white/10 shadow-2xl">
           <div className="w-full max-w-md">
             {/* Mobile Header (Visible only on small screens) */}
-            <div className="lg:hidden text-center mb-10">
-              <Sparkles className="w-8 h-8 text-[#d4af37] mx-auto mb-4" />
-              <h1 className="font-serif text-3xl tracking-widest uppercase text-white/90">PostaFácil Beauty</h1>
+            <div className="lg:hidden flex justify-center mb-10">
+              <Logo size="md" />
             </div>
 
             <div className="relative">
@@ -128,38 +130,38 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
                   <form onSubmit={handleSubmit} className="space-y-5">
                     {isRegister && (
                       <div className="relative">
-                        <User className="absolute left-0 top-3.5 w-5 h-5 text-white/40" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                         <input
                           type="text"
                           placeholder="Nome completo"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          className="input-premium pl-10"
+                          className="input-premium !pl-12"
                           required={isRegister}
                         />
                       </div>
                     )}
 
                     <div className="relative">
-                      <Mail className="absolute left-0 top-3.5 w-5 h-5 text-white/40" />
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                       <input
                         type="email"
                         placeholder="E-mail"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="input-premium pl-10"
+                        className="input-premium !pl-12"
                         required
                       />
                     </div>
 
                     <div className="relative">
-                      <Lock className="absolute left-0 top-3.5 w-5 h-5 text-white/40" />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/40" />
                       <input
                         type="password"
                         placeholder="Senha"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="input-premium pl-10"
+                        className="input-premium !pl-12"
                         required
                       />
                     </div>
@@ -225,13 +227,19 @@ function CopyButton({ text, label }: { text: string, label: string }) {
   );
 }
 
-function PlannerScreen({ onLogout }: { onLogout: () => void }) {
+type UserPlan = 'free' | 'paid' | 'unlimited' | 'subscriber';
+
+function PlannerScreen({ userId, onLogout }: { userId: string, onLogout: () => void }) {
   const [briefing, setBriefing] = useState<BriefingData>(INITIAL_BRIEFING_DATA);
   const [currentStep, setCurrentStep] = useState(0);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generatedDays, setGeneratedDays] = useState<DayContent[] | null>(null);
   const [selectedDay, setSelectedDay] = useState<DayContent | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showPaywall, setShowPaywall] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [userPlan, setUserPlan] = useState<UserPlan>('free');
+  const [viewMode, setViewMode] = useState<'generator' | 'history' | 'dashboard'>('dashboard');
   const resultRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -240,7 +248,12 @@ function PlannerScreen({ onLogout }: { onLogout: () => void }) {
   };
 
   const handleNichoSelect = (nicho: string) => {
-    setBriefing((prev) => ({ ...prev, nicho }));
+    setBriefing((prev) => {
+      if (prev.nicho.includes(nicho)) {
+        return { ...prev, nicho: prev.nicho.filter(n => n !== nicho) };
+      }
+      return { ...prev, nicho: [...prev.nicho, nicho] };
+    });
   };
 
   const nextStep = () => {
@@ -258,7 +271,7 @@ Seu cliente é um negócio da área da beleza e precisa de um calendário de con
 CONTEXTO DO CLIENTE (BRIEFING):
 Nome do Negócio: ${data.nome}
 Instagram: ${data.instagram || 'Não informado'}
-Nicho/Especialidade: ${data.nicho}
+Nicho/Especialidade: ${data.nicho.join(', ')}
 Diferencial (O que os torna únicos): ${data.diferencial || 'Atendimento de alta qualidade e resultados comprovados.'}
 Público-Alvo (Cliente ideal): ${data.publico || 'Pessoas que buscam serviços de beleza premium.'}
 
@@ -312,6 +325,9 @@ REGRAS DE OURO:
         const days = JSON.parse(jsonStr);
         setGeneratedDays(days);
         setCurrentStep(5); // Result step
+        
+        // Save to history
+        await saveToHistory(userId, days);
       } else {
         throw new Error("Resposta vazia da IA.");
       }
@@ -369,14 +385,14 @@ REGRAS DE OURO:
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto">
               {NICHOS.map((n) => (
-                <button key={n} onClick={() => handleNichoSelect(n)} className={cn("p-4 rounded-xl border text-left transition-all", briefing.nicho === n ? "bg-[#d4af37]/10 border-[#d4af37] text-[#d4af37]" : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:border-white/20")}>
+                <button key={n} onClick={() => handleNichoSelect(n)} className={cn("p-4 rounded-xl border text-left transition-all", briefing.nicho.includes(n) ? "bg-[#d4af37]/10 border-[#d4af37] text-[#d4af37]" : "bg-white/5 border-white/10 text-white/70 hover:bg-white/10 hover:border-white/20")}>
                   {n}
                 </button>
               ))}
             </div>
             <div className="flex items-center justify-between max-w-2xl mx-auto mt-8">
               <button onClick={prevStep} className="text-white/50 hover:text-white flex items-center gap-2 px-4 py-2"><ChevronLeft className="w-4 h-4" /> Voltar</button>
-              <button onClick={nextStep} disabled={!briefing.nicho} className={cn("btn-premium px-8 py-3 rounded-xl", !briefing.nicho && "opacity-50 cursor-not-allowed")}>Próximo <ArrowRight className="w-4 h-4" /></button>
+              <button onClick={nextStep} disabled={briefing.nicho.length === 0} className={cn("btn-premium px-8 py-3 rounded-xl", briefing.nicho.length === 0 && "opacity-50 cursor-not-allowed")}>Próximo <ArrowRight className="w-4 h-4" /></button>
             </div>
           </motion.div>
         );
@@ -444,28 +460,67 @@ REGRAS DE OURO:
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen bg-[#050505] text-[#fafafa] flex flex-col"
+      className="min-h-screen bg-[#0c0510] text-[#fafafa] flex flex-col"
     >
       {/* Premium Header */}
-      <header className="border-b border-white/10 bg-[#050505]/80 backdrop-blur-md sticky top-0 z-40">
+      <header className="border-b border-white/10 bg-[#0c0510]/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Sparkles className="w-5 h-5 text-[#d4af37]" />
-            <h1 className="font-serif text-xl tracking-widest uppercase">PostaFácil Beauty</h1>
+          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewMode('dashboard')}>
+            <Logo size="sm" />
           </div>
-          <button 
-            onClick={onLogout}
-            className="text-white/50 hover:text-white flex items-center gap-2 text-sm uppercase tracking-wider transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span>Sair</span>
-          </button>
+          <div className="flex items-center gap-6">
+            <button 
+              onClick={() => setViewMode('dashboard')}
+              className={cn("text-sm uppercase tracking-wider transition-colors flex items-center gap-2", viewMode === 'dashboard' ? "text-[#d4af37]" : "text-white/50 hover:text-white")}
+            >
+              <User className="w-4 h-4" />
+              <span className="hidden sm:inline">Painel</span>
+            </button>
+            <button 
+              onClick={onLogout}
+              className="text-white/50 hover:text-white flex items-center gap-2 text-sm uppercase tracking-wider transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline">Sair</span>
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="flex-1 max-w-7xl mx-auto px-6 py-12 w-full flex flex-col" ref={resultRef}>
         
-        {error && (
+        {viewMode === 'dashboard' ? (
+          <DashboardScreen 
+            userPlan={userPlan}
+            onGenerateNew={() => {
+              if (userPlan === 'paid') {
+                // In a real app, we would show a custom modal here.
+                // For this prototype, we just downgrade to free for the new plan.
+                setUserPlan('free');
+              }
+              setGeneratedDays(null);
+              setCurrentStep(0);
+              setViewMode('generator');
+            }}
+            onViewHistory={() => setViewMode('history')}
+            onSubscribe={() => {
+              setUserPlan('subscriber');
+              // In a real app, we would show a success toast here.
+            }}
+          />
+        ) : viewMode === 'history' ? (
+          <HistoryScreen 
+            userId={userId} 
+            onBack={() => setViewMode('dashboard')} 
+            onSelectGeneration={(data) => {
+              setGeneratedDays(data);
+              setCurrentStep(5);
+              setViewMode('generator');
+            }} 
+          />
+        ) : (
+          <>
+            {error && (
           <div className="max-w-2xl mx-auto w-full glass-panel text-red-400 p-6 mb-8 border-red-500/20 rounded-2xl flex items-center justify-between">
             <p className="font-mono text-sm">{error}</p>
             <button onClick={() => setError(null)} className="text-white/50 hover:text-white"><X className="w-4 h-4" /></button>
@@ -507,23 +562,67 @@ REGRAS DE OURO:
               {generatedDays.map((day) => (
                 <button
                   key={day.day}
-                  onClick={() => setSelectedDay(day)}
+                  onClick={() => {
+                    if (day.day > 3 && userPlan === 'free') {
+                      setShowPaywall(true);
+                    } else {
+                      setSelectedDay(day);
+                    }
+                  }}
                   className="glass-panel p-4 sm:p-5 rounded-2xl hover:bg-white/10 transition-all text-left flex flex-col h-40 border border-white/5 hover:border-[#d4af37]/50 group relative overflow-hidden"
                 >
                   <div className="absolute top-0 left-0 w-1 h-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <span className="text-[#d4af37] font-serif text-lg mb-1">Dia {day.day}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[#d4af37] font-serif text-lg">Dia {day.day}</span>
+                    {day.day > 3 && userPlan === 'free' && <Lock className="w-4 h-4 text-white/30" />}
+                  </div>
                   <span className="text-white/40 text-[10px] uppercase tracking-widest mb-3 flex items-center gap-1.5">
                     {day.postType.toLowerCase().includes('reel') || day.postType.toLowerCase().includes('vídeo') || day.postType.toLowerCase().includes('video') || day.postType.toLowerCase().includes('story') ? <Video className="w-3 h-3 text-white/60" /> : <ImageIcon className="w-3 h-3 text-white/60" />}
                     <span className="truncate">{day.postType}</span>
                   </span>
-                  <h4 className="text-white/80 font-medium text-xs sm:text-sm line-clamp-3 group-hover:text-white transition-colors leading-relaxed">{day.title}</h4>
+                  <h4 className={cn("text-white/80 font-medium text-xs sm:text-sm line-clamp-3 transition-colors leading-relaxed", day.day > 3 && userPlan === 'free' ? "blur-[2px] select-none" : "group-hover:text-white")}>
+                    {day.day > 3 && userPlan === 'free' ? "Conteúdo exclusivo para assinantes premium. Desbloqueie para ver." : day.title}
+                  </h4>
                 </button>
               ))}
             </div>
           </motion.div>
         )}
+          </>
+        )}
 
       </main>
+
+      {/* Paywall Modal */}
+      <AnimatePresence>
+        {showPaywall && (
+          <PaywallModal 
+            onClose={() => setShowPaywall(false)} 
+            onBuyBasic={() => {
+              setShowPaywall(false);
+              setShowUpsell(true);
+            }} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Upsell Modal */}
+      <AnimatePresence>
+        {showUpsell && (
+          <UpsellModal 
+            onAccept={() => {
+              setUserPlan('unlimited');
+              setShowUpsell(false);
+              // In a real app, we would show a success toast here.
+            }}
+            onDecline={() => {
+              setUserPlan('paid');
+              setShowUpsell(false);
+              // In a real app, we would show a success toast here.
+            }}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Day Detail Modal */}
       <AnimatePresence>
@@ -614,13 +713,25 @@ REGRAS DE OURO:
 
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  const handleLogin = () => {
+    // Simulating login and getting a user ID
+    setUserId('user-123');
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    setUserId(null);
+    setIsAuthenticated(false);
+  };
 
   return (
     <AnimatePresence mode="wait">
-      {!isAuthenticated ? (
-        <AuthScreen key="auth" onLogin={() => setIsAuthenticated(true)} />
+      {!isAuthenticated || !userId ? (
+        <AuthScreen key="auth" onLogin={handleLogin} />
       ) : (
-        <PlannerScreen key="planner" onLogout={() => setIsAuthenticated(false)} />
+        <PlannerScreen key="planner" userId={userId} onLogout={handleLogout} />
       )}
     </AnimatePresence>
   );
