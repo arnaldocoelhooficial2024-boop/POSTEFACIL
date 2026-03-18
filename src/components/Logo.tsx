@@ -1,5 +1,5 @@
 import React from 'react';
-import { Share2 } from 'lucide-react';
+import { LayoutGrid } from 'lucide-react';
 
 interface LogoProps {
   className?: string;
@@ -15,7 +15,7 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className={`bg-gradient-to-br from-[#d4af37] to-[#e6c258] ${padding} rounded-xl flex items-center justify-center shadow-lg shadow-[#d4af37]/20`}>
-        <Share2 className={`${iconSize} text-black`} />
+        <LayoutGrid className={`${iconSize} text-black`} />
       </div>
       <div className="flex flex-col justify-center">
         <span className={`font-sans font-bold tracking-tight text-white ${titleSize} leading-none`}>

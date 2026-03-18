@@ -136,7 +136,8 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
                           placeholder="Nome completo"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          className="input-premium !pl-12"
+                          className="input-premium"
+                          style={{ paddingLeft: '3rem' }}
                           required={isRegister}
                         />
                       </div>
@@ -149,7 +150,8 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
                         placeholder="E-mail"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="input-premium !pl-12"
+                        className="input-premium"
+                        style={{ paddingLeft: '3rem' }}
                         required
                       />
                     </div>
@@ -161,7 +163,8 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
                         placeholder="Senha"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="input-premium !pl-12"
+                        className="input-premium"
+                        style={{ paddingLeft: '3rem' }}
                         required
                       />
                     </div>
@@ -227,7 +230,7 @@ function CopyButton({ text, label }: { text: string, label: string }) {
   );
 }
 
-type UserPlan = 'free' | 'paid' | 'unlimited' | 'subscriber';
+type UserPlan = 'free' | 'paid' | 'unlimited' | 'subscriber' | 'lifetime';
 
 function PlannerScreen({ userId, onLogout }: { userId: string, onLogout: () => void }) {
   const [briefing, setBriefing] = useState<BriefingData>(INITIAL_BRIEFING_DATA);
@@ -239,7 +242,7 @@ function PlannerScreen({ userId, onLogout }: { userId: string, onLogout: () => v
   const [showPaywall, setShowPaywall] = useState(false);
   const [showUpsell, setShowUpsell] = useState(false);
   const [userPlan, setUserPlan] = useState<UserPlan>('free');
-  const [viewMode, setViewMode] = useState<'generator' | 'history' | 'dashboard'>('dashboard');
+  const [viewMode, setViewMode] = useState<'generator' | 'history' | 'dashboard'>('generator');
   const resultRef = useRef<HTMLDivElement>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -559,31 +562,50 @@ REGRAS DE OURO:
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {generatedDays.map((day) => (
-                <button
-                  key={day.day}
-                  onClick={() => {
-                    if (day.day > 3 && userPlan === 'free') {
-                      setShowPaywall(true);
-                    } else {
-                      setSelectedDay(day);
-                    }
-                  }}
-                  className="glass-panel p-4 sm:p-5 rounded-2xl hover:bg-white/10 transition-all text-left flex flex-col h-40 border border-white/5 hover:border-[#d4af37]/50 group relative overflow-hidden"
-                >
-                  <div className="absolute top-0 left-0 w-1 h-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" />
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[#d4af37] font-serif text-lg">Dia {day.day}</span>
-                    {day.day > 3 && userPlan === 'free' && <Lock className="w-4 h-4 text-white/30" />}
-                  </div>
-                  <span className="text-white/40 text-[10px] uppercase tracking-widest mb-3 flex items-center gap-1.5">
-                    {day.postType.toLowerCase().includes('reel') || day.postType.toLowerCase().includes('vídeo') || day.postType.toLowerCase().includes('video') || day.postType.toLowerCase().includes('story') ? <Video className="w-3 h-3 text-white/60" /> : <ImageIcon className="w-3 h-3 text-white/60" />}
-                    <span className="truncate">{day.postType}</span>
-                  </span>
-                  <h4 className={cn("text-white/80 font-medium text-xs sm:text-sm line-clamp-3 transition-colors leading-relaxed", day.day > 3 && userPlan === 'free' ? "blur-[2px] select-none" : "group-hover:text-white")}>
-                    {day.day > 3 && userPlan === 'free' ? "Conteúdo exclusivo para assinantes premium. Desbloqueie para ver." : day.title}
-                  </h4>
-                </button>
+              {generatedDays.map((day, index) => (
+                <React.Fragment key={day.day}>
+                  {index === 3 && userPlan === 'free' && (
+                    <div className="col-span-full my-6">
+                      <div className="bg-gradient-to-r from-[#d4af37]/10 via-purple-900/20 to-[#d4af37]/10 border border-[#d4af37]/30 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-overlay"></div>
+                        <Lock className="w-12 h-12 text-[#d4af37] mx-auto mb-4 relative z-10" />
+                        <h3 className="text-2xl sm:text-3xl font-serif mb-3 relative z-10 text-white/90">Desbloqueie seu mês completo</h3>
+                        <p className="text-white/70 mb-8 max-w-2xl mx-auto relative z-10 text-lg">
+                          Você já viu o poder da IA nos primeiros 3 dias. Desbloqueie os próximos 27 dias e tenha um calendário magnético completo para o seu negócio.
+                        </p>
+                        <button 
+                          onClick={() => setShowPaywall(true)} 
+                          className="relative z-10 px-8 py-4 bg-[#d4af37] text-black rounded-xl font-bold text-lg hover:bg-[#e6c258] transition-colors shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+                        >
+                          Ver Opções de Desbloqueio
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (day.day > 3 && userPlan === 'free') {
+                        setShowPaywall(true);
+                      } else {
+                        setSelectedDay(day);
+                      }
+                    }}
+                    className="glass-panel p-4 sm:p-5 rounded-2xl hover:bg-white/10 transition-all text-left flex flex-col h-40 border border-white/5 hover:border-[#d4af37]/50 group relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 w-1 h-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[#d4af37] font-serif text-lg">Dia {day.day}</span>
+                      {day.day > 3 && userPlan === 'free' && <Lock className="w-4 h-4 text-white/30" />}
+                    </div>
+                    <span className="text-white/40 text-[10px] uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                      {day.postType.toLowerCase().includes('reel') || day.postType.toLowerCase().includes('vídeo') || day.postType.toLowerCase().includes('video') || day.postType.toLowerCase().includes('story') ? <Video className="w-3 h-3 text-white/60" /> : <ImageIcon className="w-3 h-3 text-white/60" />}
+                      <span className="truncate">{day.postType}</span>
+                    </span>
+                    <h4 className={cn("text-white/80 font-medium text-xs sm:text-sm line-clamp-3 transition-colors leading-relaxed", day.day > 3 && userPlan === 'free' ? "blur-[2px] select-none" : "group-hover:text-white")}>
+                      {day.day > 3 && userPlan === 'free' ? "Conteúdo exclusivo para assinantes premium. Desbloqueie para ver." : day.title}
+                    </h4>
+                  </button>
+                </React.Fragment>
               ))}
             </div>
           </motion.div>
@@ -598,9 +620,14 @@ REGRAS DE OURO:
         {showPaywall && (
           <PaywallModal 
             onClose={() => setShowPaywall(false)} 
-            onBuyBasic={() => {
-              setShowPaywall(false);
-              setShowUpsell(true);
+            onSuccess={(type) => {
+              if (type === 'monthly') {
+                setUserPlan('subscriber');
+                setShowPaywall(false);
+              } else {
+                setShowPaywall(false);
+                setShowUpsell(true);
+              }
             }} 
           />
         )}
@@ -611,14 +638,12 @@ REGRAS DE OURO:
         {showUpsell && (
           <UpsellModal 
             onAccept={() => {
-              setUserPlan('unlimited');
+              setUserPlan('lifetime');
               setShowUpsell(false);
-              // In a real app, we would show a success toast here.
             }}
             onDecline={() => {
               setUserPlan('paid');
               setShowUpsell(false);
-              // In a real app, we would show a success toast here.
             }}
           />
         )}
