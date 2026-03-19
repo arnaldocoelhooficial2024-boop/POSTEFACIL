@@ -24,6 +24,7 @@ interface BriefingData {
   nicho: string[];
   diferencial: string;
   publico: string;
+  localizacao: string;
 }
 
 interface DayContent {
@@ -42,6 +43,7 @@ const INITIAL_BRIEFING_DATA: BriefingData = {
   nicho: [],
   diferencial: '',
   publico: '',
+  localizacao: '',
 };
 
 const NICHOS = [
@@ -96,7 +98,7 @@ function AuthScreen({ onLogin }: { onLogin: () => void }) {
           >
             <Logo size="lg" className="mb-8" />
             <p className="text-lg xl:text-xl font-light text-white/70 max-w-lg leading-relaxed mt-6">
-              A inteligência artificial a favor da sua beleza. Crie conteúdos magnéticos e atraia um público premium para o seu negócio.
+              Nunca mais fique sem saber o que postar. Tenha 30 dias de conteúdo pronto personalizado para o seu negócio em minutos.
             </p>
           </motion.div>
         </div>
@@ -267,16 +269,23 @@ function PlannerScreen({ userId, onLogout }: { userId: string, onLogout: () => v
     if (currentStep > 0) setCurrentStep(prev => prev - 1);
   };
 
-  const generatePrompt = (data: BriefingData) => `
+  const generatePrompt = (data: BriefingData) => {
+    const currentDate = new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    return `
 Aja como um Copywriter Sênior altamente experiente de uma agência de marketing de alta performance.
 Seu cliente é um negócio da área da beleza e precisa de um calendário de conteúdo de 30 dias focado em conversão e autoridade.
 
 CONTEXTO DO CLIENTE (BRIEFING):
 Nome do Negócio: ${data.nome}
 Instagram: ${data.instagram || 'Não informado'}
+Localização: ${data.localizacao || 'Não informado'}
 Nicho/Especialidade: ${data.nicho.join(', ')}
 Diferencial (O que os torna únicos): ${data.diferencial || 'Atendimento de alta qualidade e resultados comprovados.'}
 Público-Alvo (Cliente ideal): ${data.publico || 'Pessoas que buscam serviços de beleza premium.'}
+
+INFORMAÇÕES TEMPORAIS:
+Data de Início do Calendário: ${currentDate}
+(Considere a data de início para alinhar o conteúdo com possíveis datas comemorativas, finais de semana ou eventos sazonais relevantes para o nicho de beleza nos próximos 30 dias).
 
 REGRAS DE OURO:
 1. Seja simples, direto e altamente persuasivo. A pessoa precisa apenas copiar e colar.
@@ -286,6 +295,7 @@ REGRAS DE OURO:
 5. Inclua hashtags estratégicas no final da legenda.
 6. Alterne os tipos de post (Ex: Reel de Autoridade, Foto de Resultado, Carrossel Educativo, Story de Bastidor, Reel de Oferta).
 `;
+  };
 
   const handleGenerate = async () => {
     setIsGenerating(true);
@@ -369,6 +379,10 @@ REGRAS DE OURO:
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-widest text-white/40 font-semibold flex items-center gap-2"><Instagram className="w-4 h-4" /> Perfil do Instagram (Opcional)</label>
                 <input type="text" name="instagram" value={briefing.instagram} onChange={handleInputChange} placeholder="Ex: @maisonblanc" className="input-premium text-lg py-4" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-widest text-white/40 font-semibold">Localização (Opcional)</label>
+                <input type="text" name="localizacao" value={briefing.localizacao} onChange={handleInputChange} placeholder="Ex: São Paulo, SP" className="input-premium text-lg py-4" />
               </div>
               <button onClick={nextStep} disabled={!briefing.nome.trim()} className={cn("btn-premium w-full py-4 rounded-xl mt-8", !briefing.nome.trim() && "opacity-50 cursor-not-allowed")}>
                 Próximo Passo <ArrowRight className="w-5 h-5" />
@@ -562,52 +576,75 @@ REGRAS DE OURO:
             </div>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {generatedDays.map((day, index) => (
-                <React.Fragment key={day.day}>
-                  {index === 3 && userPlan === 'free' && (
-                    <div className="col-span-full my-6">
-                      <div className="bg-gradient-to-r from-[#d4af37]/10 via-purple-900/20 to-[#d4af37]/10 border border-[#d4af37]/30 rounded-3xl p-8 sm:p-12 text-center relative overflow-hidden">
-                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20 mix-blend-overlay"></div>
-                        <Lock className="w-12 h-12 text-[#d4af37] mx-auto mb-4 relative z-10" />
-                        <h3 className="text-2xl sm:text-3xl font-serif mb-3 relative z-10 text-white/90">Desbloqueie seu mês completo</h3>
-                        <p className="text-white/70 mb-8 max-w-2xl mx-auto relative z-10 text-lg">
-                          Você já viu o poder da IA nos primeiros 3 dias. Desbloqueie os próximos 27 dias e tenha um calendário magnético completo para o seu negócio.
-                        </p>
-                        <button 
-                          onClick={() => setShowPaywall(true)} 
-                          className="relative z-10 px-8 py-4 bg-[#d4af37] text-black rounded-xl font-bold text-lg hover:bg-[#e6c258] transition-colors shadow-[0_0_20px_rgba(212,175,55,0.3)]"
-                        >
-                          Ver Opções de Desbloqueio
-                        </button>
-                      </div>
-                    </div>
-                  )}
+              {generatedDays.slice(0, 3).map((day) => (
+                <button
+                  key={day.day}
+                  onClick={() => setSelectedDay(day)}
+                  className="glass-panel p-4 sm:p-5 rounded-2xl hover:bg-white/10 transition-all text-left flex flex-col h-40 border border-white/5 hover:border-[#d4af37]/50 group relative overflow-hidden"
+                >
+                  <div className="absolute top-0 left-0 w-1 h-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[#d4af37] font-serif text-lg">Dia {day.day}</span>
+                  </div>
+                  <span className="text-white/40 text-[10px] uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                    {day.postType.toLowerCase().includes('reel') || day.postType.toLowerCase().includes('vídeo') || day.postType.toLowerCase().includes('video') || day.postType.toLowerCase().includes('story') ? <Video className="w-3 h-3 text-white/60" /> : <ImageIcon className="w-3 h-3 text-white/60" />}
+                    <span className="truncate">{day.postType}</span>
+                  </span>
+                  <h4 className="text-white/80 font-medium text-xs sm:text-sm line-clamp-3 transition-colors leading-relaxed group-hover:text-white">
+                    {day.title}
+                  </h4>
+                </button>
+              ))}
+            </div>
+
+            {userPlan === 'free' && generatedDays.length > 3 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
+                {generatedDays.slice(3).map((day) => (
                   <button
-                    onClick={() => {
-                      if (day.day > 3 && userPlan === 'free') {
-                        setShowPaywall(true);
-                      } else {
-                        setSelectedDay(day);
-                      }
-                    }}
+                    key={day.day}
+                    onClick={() => setShowPaywall(true)}
                     className="glass-panel p-4 sm:p-5 rounded-2xl hover:bg-white/10 transition-all text-left flex flex-col h-40 border border-white/5 hover:border-[#d4af37]/50 group relative overflow-hidden"
                   >
                     <div className="absolute top-0 left-0 w-1 h-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-[#d4af37] font-serif text-lg">Dia {day.day}</span>
-                      {day.day > 3 && userPlan === 'free' && <Lock className="w-4 h-4 text-white/30" />}
+                      <Lock className="w-4 h-4 text-white/30" />
                     </div>
                     <span className="text-white/40 text-[10px] uppercase tracking-widest mb-3 flex items-center gap-1.5">
                       {day.postType.toLowerCase().includes('reel') || day.postType.toLowerCase().includes('vídeo') || day.postType.toLowerCase().includes('video') || day.postType.toLowerCase().includes('story') ? <Video className="w-3 h-3 text-white/60" /> : <ImageIcon className="w-3 h-3 text-white/60" />}
                       <span className="truncate">{day.postType}</span>
                     </span>
-                    <h4 className={cn("text-white/80 font-medium text-xs sm:text-sm line-clamp-3 transition-colors leading-relaxed", day.day > 3 && userPlan === 'free' ? "blur-[2px] select-none" : "group-hover:text-white")}>
-                      {day.day > 3 && userPlan === 'free' ? "Conteúdo exclusivo para assinantes premium. Desbloqueie para ver." : day.title}
+                    <h4 className="text-white/80 font-medium text-xs sm:text-sm line-clamp-3 transition-colors leading-relaxed blur-[2px] select-none">
+                      Conteúdo exclusivo para assinantes premium. Desbloqueie para ver.
                     </h4>
                   </button>
-                </React.Fragment>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
+
+            {userPlan !== 'free' && generatedDays.length > 3 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 mt-4">
+                {generatedDays.slice(3).map((day) => (
+                  <button
+                    key={day.day}
+                    onClick={() => setSelectedDay(day)}
+                    className="glass-panel p-4 sm:p-5 rounded-2xl hover:bg-white/10 transition-all text-left flex flex-col h-40 border border-white/5 hover:border-[#d4af37]/50 group relative overflow-hidden"
+                  >
+                    <div className="absolute top-0 left-0 w-1 h-full bg-[#d4af37] opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[#d4af37] font-serif text-lg">Dia {day.day}</span>
+                    </div>
+                    <span className="text-white/40 text-[10px] uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                      {day.postType.toLowerCase().includes('reel') || day.postType.toLowerCase().includes('vídeo') || day.postType.toLowerCase().includes('video') || day.postType.toLowerCase().includes('story') ? <Video className="w-3 h-3 text-white/60" /> : <ImageIcon className="w-3 h-3 text-white/60" />}
+                      <span className="truncate">{day.postType}</span>
+                    </span>
+                    <h4 className="text-white/80 font-medium text-xs sm:text-sm line-clamp-3 transition-colors leading-relaxed group-hover:text-white">
+                      {day.title}
+                    </h4>
+                  </button>
+                ))}
+              </div>
+            )}
           </motion.div>
         )}
           </>
@@ -686,6 +723,18 @@ REGRAS DE OURO:
               </div>
 
               <div className="p-6 sm:p-8 space-y-8">
+                <div className="flex justify-end">
+                  <a
+                    href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(selectedDay.title)}&details=${encodeURIComponent(`Tipo: ${selectedDay.postType}\n\nVisual/Cena: ${selectedDay.visualConcept}\n\nRoteiro: ${selectedDay.videoScript || 'N/A'}\n\nLegenda: ${selectedDay.caption}\n\nHashtags: ${selectedDay.hashtags}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-sm font-medium text-white/80 transition-colors"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Adicionar ao Google Agenda
+                  </a>
+                </div>
+
                 {/* Visual Concept */}
                 <div className="space-y-3">
                   <h4 className="text-xs uppercase tracking-widest text-white/40 font-semibold flex items-center gap-2">

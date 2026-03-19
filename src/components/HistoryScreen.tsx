@@ -37,7 +37,7 @@ export function HistoryScreen({ userId, onBack, onSelectGeneration }: HistoryScr
           <ArrowLeft className="w-6 h-6" />
         </button>
         <div>
-          <h2 className="font-serif text-3xl sm:text-4xl text-white/90">Banco de Dados</h2>
+          <h2 className="font-serif text-3xl sm:text-4xl text-white/90">Histórico</h2>
           <p className="text-white/50 font-light">Seu histórico de calendários gerados.</p>
         </div>
       </div>

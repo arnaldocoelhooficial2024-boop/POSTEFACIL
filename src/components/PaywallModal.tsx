@@ -9,13 +9,14 @@ interface PaywallModalProps {
 
 export function PaywallModal({ onClose, onSuccess }: PaywallModalProps) {
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-6 bg-black/80 backdrop-blur-md">
-      <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: 20 }}
-        className="glass-panel w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden bg-[#1a0b1c]"
-      >
+    <div className="fixed inset-0 z-[200] overflow-y-auto bg-black/80 backdrop-blur-md">
+      <div className="min-h-full flex items-center justify-center p-4 sm:p-6">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 20 }}
+          className="glass-panel w-full max-w-4xl rounded-3xl border border-white/10 shadow-2xl relative overflow-hidden bg-[#1a0b1c]"
+        >
         <button 
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 text-white/50 hover:text-white transition-colors z-10"
@@ -81,7 +82,8 @@ export function PaywallModal({ onClose, onSuccess }: PaywallModalProps) {
           
           <p className="text-center text-xs text-white/40">Pagamento 100% seguro. Acesso imediato após a confirmação.</p>
         </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 }
